@@ -23,4 +23,3 @@ jobs:
       - name: Push Docker image
         run: |
           docker push pankajbelote/trekone-backend:latest
-          
