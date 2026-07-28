@@ -50,14 +50,45 @@ app.use('/trek', trekRoutes);
 app.use('/admin', adminRoutes);
 app.use('/admin/reports', reportRoutes);
 
-app.listen(port, function () {
-    console.log("server running on port " + port)
-});
+// app.listen(port, function () {
+//     console.log("server running on port " + port)
+// });
 
 app.get('/', (req, res) => {
     res.send("server is in running")
 });
 
+// app.get('/health', (req, res) => {
+//     res.send("Health is OK ");
+// });
+
+app.get('/health', (req, res) => {
+    const dbState = mongoose.connection.readyState;
+    const databaseStatus = {
+        0: "DISCONNECTED",
+        1: "CONNECTED",
+        2: "CONNECTING",
+        3: "DISCONNECTING"
+    };
+    res.status(200).json({
+        application: "TrekOne API",
+        status: "UP",
+        database: databaseStatus[dbState],
+        uptime: `${process.uptime().toFixed(2)} seconds`,
+        timestamp: new Date().toISOString()
+    });
+});
+
+// mongoose.connect(process.env.MONGO_URI)
+//     .then(() => console.log("MongoDB connected"))
+//     .catch(err => console.log(err));
+
 mongoose.connect(process.env.MONGO_URI)
-    .then(() => console.log("MongoDB connected"))
-    .catch(err => console.log(err));
+.then(() => {
+    console.log("MongoDB connected");
+
+    app.listen(port, () => {
+        console.log(`Server running on port ${port}`);
+    });
+})
+.catch(err => console.error(err));    

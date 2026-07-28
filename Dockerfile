@@ -1,20 +1,29 @@
-# Use Node.js 20 LTS
+# ---------- Base Image ----------
 FROM node:20-alpine
 
-# Create app directory
+# ---------- App Directory ----------
 WORKDIR /app
 
-# Copy package files
+# ---------- Copy Package Files ----------
 COPY package*.json ./
 
-# Install dependencies
-RUN npm install
+# ---------- Install Production Dependencies ----------
+RUN npm ci --omit=dev
 
-# Copy project files
+# ---------- Copy Application ----------
 COPY . .
 
-# Expose Express port
+# ---------- Create Non-Root User ----------
+RUN addgroup -S appgroup && adduser -S appuser -G appgroup
+
+USER appuser
+
+# ---------- Expose Application Port ----------
 EXPOSE 3000
 
-# Start the application
-CMD ["npm", "start"]
+# ---------- Health Check ----------
+HEALTHCHECK --interval=30s --timeout=5s --start-period=20s --retries=3 \
+CMD wget --quiet --tries=1 --spider http://localhost:3000/health || exit 1
+
+# ---------- Start Application ----------
+CMD ["node", "server.js"]
