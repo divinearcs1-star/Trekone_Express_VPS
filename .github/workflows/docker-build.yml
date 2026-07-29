@@ -1,8 +1,5 @@
 name: Build, Push and Deploy Backend
-<<<<<<< HEAD
-=======
 
->>>>>>> 0f9da40ef66913f2b801c8b9133b53729d89f65d
 on:
   push:
     branches:
@@ -40,8 +37,4 @@ jobs:
             cd /root/trekone
             docker compose pull backend
             docker compose up -d backend
-<<<<<<< HEAD
             docker image prune -f
-=======
-            docker image prune -f
->>>>>>> 0f9da40ef66913f2b801c8b9133b53729d89f65d
