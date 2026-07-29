@@ -1,11 +1,14 @@
-name: Build and Push Docker Image
+name: Build, Push and Deploy Backend
+
 on:
   push:
     branches:
       - main
+
 jobs:
   docker-build-push:
     runs-on: ubuntu-latest
+
     steps:
       - name: Checkout code
         uses: actions/checkout@v4
@@ -23,3 +26,15 @@ jobs:
       - name: Push Docker image
         run: |
           docker push pankajbelote/trekone-backend:latest
+
+      - name: Deploy to VPS
+        uses: appleboy/ssh-action@v1.2.2
+        with:
+          host: ${{ secrets.VPS_HOST }}
+          username: ${{ secrets.VPS_USER }}
+          key: ${{ secrets.VPS_SSH_KEY }}
+          script: |
+            cd /root/trekone
+            docker compose pull backend
+            docker compose up -d backend
+            docker image prune -f
