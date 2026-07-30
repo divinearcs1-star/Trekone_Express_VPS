@@ -22,12 +22,29 @@ const port = process.env.PORT || '3000';
 //     next();
 // });
 
+// app.use(cors({
+//     origin: [
+//         "https://trekone.netlify.app",
+//         "http://trekone.s3-website.ap-south-1.amazonaws.com"
+//         "http://trekone.s3-website.ap-south-1.amazonaws.com"
+//         // ,"http://localhost:4200"
+//     ],
+//     methods: ["GET", "POST", "PUT", "DELETE"],
+//     credentials: true
+// }));
+
+const allowedOrigins = process.env.CORS_ORIGINS
+    ? process.env.CORS_ORIGINS.split(',')
+    : [];
+
 app.use(cors({
-    origin: [
-        "https://trekone.netlify.app",
-        "http://trekone.s3-website.ap-south-1.amazonaws.com"
-        // ,"http://localhost:4200"
-    ],
+    origin(origin, callback) {
+        if (!origin) return callback(null, true);
+        if (allowedOrigins.includes(origin)) {
+            return callback(null, true);
+        }
+        callback(new Error(`Origin ${origin} is not allowed by CORS`));
+    },
     methods: ["GET", "POST", "PUT", "DELETE"],
     credentials: true
 }));
