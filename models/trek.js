@@ -18,10 +18,10 @@ const trekSchema = new Schema({
       required: true
     },
     endDate: {
-      type: Date  
+      type: Date
     },
     reportingTime: {
-      type: String 
+      type: String
     },
     totalSeats: {
       type: Number,
@@ -96,6 +96,15 @@ const trekSchema = new Schema({
   thingsToCarry: [String],
   includes: [String],
   majorAttraction: [String],
+  quickItinerary: [
+    {
+      order: Number,
+      icon: String,
+      title: String,
+      subtitle: String,
+      time: String
+    }
+  ],
   itinerary: [
     {
       day: Number,
