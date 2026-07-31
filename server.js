@@ -2,7 +2,6 @@ const express = require('express')
 const mongoose = require('mongoose');  // MongoDB library
 const cors = require('cors')
 const path = require('path');
-const apiRoute = require('./routes/api')
 const authRoutes = require('./routes/auth');
 const paymentRoutes = require('./routes/payment');
 const bookingRoutes = require('./routes/booking');
@@ -25,7 +24,6 @@ const port = process.env.PORT || '3000';
 // app.use(cors({
 //     origin: [
 //         "https://trekone.netlify.app",
-//         "http://trekone.s3-website.ap-south-1.amazonaws.com"
 //         "http://trekone.s3-website.ap-south-1.amazonaws.com"
 //         // ,"http://localhost:4200"
 //     ],
@@ -59,13 +57,12 @@ app.use(express.json());
 //     console.error("Global Error:", err.message);
 //     res.status(400).json({ error: err.message });
 // });
-app.use('/api', apiRoute);
-app.use('/auth', authRoutes);
-app.use('/payment', paymentRoutes);
-app.use('/booking', bookingRoutes);
-app.use('/trek', trekRoutes);
-app.use('/admin', adminRoutes);
-app.use('/admin/reports', reportRoutes);
+app.use('/api/v1/auth', authRoutes);
+app.use('/api/v1/payment', paymentRoutes);
+app.use('/api/v1/booking', bookingRoutes);
+app.use('/api/v1/trek', trekRoutes);
+app.use('/api/v1/admin', adminRoutes);
+app.use('/api/v1/admin/reports', reportRoutes);
 
 // app.listen(port, function () {
 //     console.log("server running on port " + port)
@@ -79,7 +76,7 @@ app.get('/', (req, res) => {
 //     res.send("Health is OK ");
 // });
 
-app.get('/health', (req, res) => {
+app.get('/api/v1/health', (req, res) => {
     const dbState = mongoose.connection.readyState;
     const databaseStatus = {
         0: "DISCONNECTED",
