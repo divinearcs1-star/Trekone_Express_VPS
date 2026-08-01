@@ -10,27 +10,26 @@ const nodemailer = require('nodemailer');
 //     pass: process.env.APP_PASS
 //   }
 // });
+
 const transporter = nodemailer.createTransport({
     host: "smtp.gmail.com",
     port: 587,
     secure: false,
+    family: 4,
     auth: {
         user: process.env.EMAIL_ID,
         pass: process.env.APP_PASS
     }
 });
 const sendMail = async (to, subject, htmlContent) => {
-    try {
-        const mailOptions = {
-            from: process.env.EMAIL_ID,
-            to,
-            subject,
-            html: htmlContent
-        };
-        const info = await transporter.sendMail(mailOptions);
-        console.log("Mail sent:", info.messageId);
-    } catch (error) {
-        console.log("Mail error:", error);
-    }
+    const mailOptions = {
+        from: process.env.EMAIL_ID,
+        to,
+        subject,
+        html: htmlContent
+    };
+    const info = await transporter.sendMail(mailOptions);
+    console.log("Mail sent:", info.messageId);
+    return info;
 };
 module.exports = { sendMail };

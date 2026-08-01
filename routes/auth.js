@@ -189,15 +189,21 @@ router.post('/forgot-password', async (req, res) => {
     // const resetLink = `http://localhost:4200/reset-password/${token}`;
     const resetLink = `${process.env.FRONTEND_URL}/reset-password/${token}`;
 
-    const htmlContent = `
+    try {
+      const htmlContent = `
       <h1>Team TrekOne</h1> 
       <h2>Password Reset</h2>
       <p>Click the link below to reset your password.</p>
       <a href="${resetLink}">Click here</a>
       <p>This link will expire in 1 hour.</p>`;
-    await sendMail(user.email, "Reset Password", htmlContent);
-    res.json({ message: 'Reset link sent' });
-
+      await sendMail(user.email, "Reset Password", htmlContent);
+      res.json({ message: 'Reset link sent' });
+    } catch (err) {
+      console.log(err);
+      res.status(500).json({
+        message: "Unable to send reset email. Please try again later."
+      });
+    }
   } catch (err) {
     res.status(500).json({ error: err.message });
   }
