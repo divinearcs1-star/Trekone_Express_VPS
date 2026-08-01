@@ -33,5 +33,4 @@ const sendMail = async (to, subject, htmlContent) => {
         console.log("Mail error:", error);
     }
 };
-
 module.exports = { sendMail };
