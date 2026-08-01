@@ -31,4 +31,5 @@ const sendMail = async (to, subject, htmlContent) => {
     console.log("Mail sent:", info.messageId);
     return info;
 };
+
 module.exports = { sendMail };
