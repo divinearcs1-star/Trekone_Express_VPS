@@ -10,7 +10,6 @@ const nodemailer = require('nodemailer');
 //     pass: process.env.APP_PASS
 //   }
 // });
-
 const transporter = nodemailer.createTransport({
     host: "smtp.gmail.com",
     port: 587,
