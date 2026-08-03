@@ -7,7 +7,7 @@ const nodemailer = require('nodemailer');
 //   service: 'gmail',
 //   auth: {
 //     user: process.env.EMAIL_ID,
-//     pass: process.env.APP_PASS
+//     pass: process.env.EMAIL_PASS
 //   }
 // });
 const transporter = nodemailer.createTransport({
@@ -17,7 +17,7 @@ const transporter = nodemailer.createTransport({
     family: 4,
     auth: {
         user: process.env.EMAIL_ID,
-        pass: process.env.APP_PASS
+        pass: process.env.EMAIL_PASS
     }
 });
 const sendMail = async (to, subject, htmlContent) => {

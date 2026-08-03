@@ -12,25 +12,6 @@ const reportRoutes = require('./routes/report');
 const app = express();
 const port = process.env.PORT || '3000';
 
-// app.use(cors());
-
-// app.use((req, res, next) => {
-//     res.header("Access-Control-Allow-Origin",
-//      //    "http://localhost:4200");
-//          "http://trekone.s3-website.ap-south-1.amazonaws.com");
-//     next();
-// });
-
-// app.use(cors({
-//     origin: [
-//         "https://trekone.netlify.app",
-//         "http://trekone.s3-website.ap-south-1.amazonaws.com"
-//         // ,"http://localhost:4200"
-//     ],
-//     methods: ["GET", "POST", "PUT", "DELETE"],
-//     credentials: true
-// }));
-
 const allowedOrigins = process.env.CORS_ORIGINS
     ? process.env.CORS_ORIGINS.split(',')
     : [];
@@ -46,17 +27,20 @@ app.use(cors({
     methods: ["GET", "POST", "PUT", "DELETE"],
     credentials: true
 }));
-
 // app.use(express.static(path.join(__dirname, 'dist')));
 
-app.use('/payment/razorpay/webhook', express.raw({ type: 'application/json' }));
-//app.use(bodyParser.json());     // used when db data in json format
+app.use('/api/v1/payment/razorpay/webhook', express.raw({ type: 'application/json' }));
 app.use(express.json());
 
-// app.use((err, req, res, next) => {
-//     console.error("Global Error:", err.message);
-//     res.status(400).json({ error: err.message });
-// });
+app.use((err, req, res, next) => {
+    console.error("Global Error:", err.message);
+    console.error(err);
+    res.status(500).json({
+        success:false,
+        message:"Internal Server Error"
+    });
+});
+
 app.use('/api/v1/auth', authRoutes);
 app.use('/api/v1/payment', paymentRoutes);
 app.use('/api/v1/booking', bookingRoutes);
@@ -64,17 +48,9 @@ app.use('/api/v1/trek', trekRoutes);
 app.use('/api/v1/admin', adminRoutes);
 app.use('/api/v1/admin/reports', reportRoutes);
 
-// app.listen(port, function () {
-//     console.log("server running on port " + port)
-// });
-
 app.get('/', (req, res) => {
     res.send("server is in running")
 });
-
-// app.get('/health', (req, res) => {
-//     res.send("Health is OK ");
-// });
 
 app.get('/api/v1/health', (req, res) => {
     const dbState = mongoose.connection.readyState;
@@ -92,10 +68,6 @@ app.get('/api/v1/health', (req, res) => {
         timestamp: new Date().toISOString()
     });
 });
-
-// mongoose.connect(process.env.MONGO_URI)
-//     .then(() => console.log("MongoDB connected"))
-//     .catch(err => console.log(err));
 
 mongoose.connect(process.env.MONGO_URI)
 .then(() => {
