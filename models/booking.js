@@ -6,7 +6,8 @@ const Schema = mongoose.Schema;
 const bookingSchema = new Schema({
     bookingId: {
         type: String,
-        required: true
+        required: true,
+        unique: true
     },
     trekId: {
         type: mongoose.Schema.Types.ObjectId,

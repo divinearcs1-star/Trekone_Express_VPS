@@ -62,9 +62,11 @@ const createOrder = async (bookingData) => {
                     }
                 };
             }
-            const now = new Date();
-            const orderId = 'TRK' + now.getFullYear() + String(now.getMonth() + 1).padStart(2, '0') + String(now.getDate()).padStart(2, '0') + Date.now().toString().slice(-6);
-            // console.log(orderId);
+            // const now = new Date();
+            //    const orderId = 'TRK' + now.getFullYear() + String(now.getMonth() + 1).padStart(2, '0') + String(now.getDate()).padStart(2, '0') + Date.now().toString().slice(-6);
+            const random = Math.floor(1000 + Math.random() * 9000);
+            const orderId = `TRK${new Date().getFullYear()}${String(new Date().getMonth() + 1).padStart(2, '0')}${String(new Date().getDate()).padStart(2, '0')}${Date.now().toString().slice(-6)}${random}`;
+            console.log(orderId);
             bookingData.paymentStatus = "Pending"
             bookingData.bookingId = orderId;
             bookingData.orderId = "";

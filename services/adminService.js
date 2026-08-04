@@ -250,7 +250,7 @@ const addTrek = async (trekData) => {
         };
     }
 };
-const getTrekById = async (id) => {
+const getTrek = async (id) => {
     try {
         const trek = await Trek.findById(id);
         if (!trek) {
@@ -468,7 +468,7 @@ module.exports = {
     approveRefund,
     rejectRefund,
     addTrek,
-    getTrekById,
+    getTrek,
     updateTrek,
     deleteTrek,
     getAllBookings,
