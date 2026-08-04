@@ -201,7 +201,8 @@ const rejectRefund = async (bookingId) => {
         booking.refundStatus = "Rejected";
         await booking.save();
 
-        const htmlContent = `
+        try {
+            const htmlContent = `
             <h2>Refund Rejected</h2>
             <p>Hello ${booking.customerName},</p>
             <p>Your refund request for <b>${booking.eventName}</b> has been rejected.</p>
@@ -212,7 +213,10 @@ const rejectRefund = async (bookingId) => {
             <br/>
             <p>Thank you for choosing TrekOne.</p>
             <p><b>Team TrekOne</b></p>`;
-        await sendMail(booking.email, "Refund Request Rejected", htmlContent);
+            await sendMail(booking.email, "Refund Request Rejected", htmlContent);
+        } catch (err) {
+            console.log(err);
+        }
         return {
             success: true,
             message: "Refund Rejected"
@@ -277,6 +281,15 @@ const updateTrek = async (id, trekData) => {
                 new: true
             }
         );
+        if (!updatedTrek) {
+            throw {
+                statusCode: 404,
+                body: {
+                    success: false,
+                    message: "Trek not found"
+                }
+            };
+        }
         return {
             success: true,
             message: "Trek updated successfully",
@@ -295,12 +308,22 @@ const updateTrek = async (id, trekData) => {
 };
 const deleteTrek = async (id) => {
     try {
-        await Trek.findByIdAndDelete(id);
+        const deleted = await Trek.findByIdAndDelete(id);
+        if (!deleted) {
+            throw {
+                statusCode: 404,
+                body: {
+                    success: false,
+                    message: "Trek not found"
+                }
+            };
+        }
         return {
             success: true,
             message: "Trek deleted successfully"
         };
     } catch (error) {
+        if (error.statusCode) throw error;
         throw {
             statusCode: 500,
             body: {
@@ -325,16 +348,26 @@ const getAllBookings = async () => {
 };
 const makeAdmin = async (id) => {
     try {
-        await User.findByIdAndUpdate(id,
+        const user = await User.findByIdAndUpdate(id,
             {
                 role: "admin"
             }
         );
+        if (!user) {
+            throw {
+                statusCode: 404,
+                body: {
+                    success: false,
+                    message: "User not found"
+                }
+            };
+        }
         return {
             success: true,
             message: "User promoted to admin"
         };
     } catch (error) {
+        if (error.statusCode) throw error;
         throw {
             statusCode: 500,
             body: {
@@ -364,17 +397,27 @@ const getPayments = async () => {
 };
 const blockUser = async (id) => {
     try {
-        await User.findByIdAndUpdate(
+        const user = await User.findByIdAndUpdate(
             id,
             {
                 status: "blocked"
             }
         );
+        if (!user) {
+            throw {
+                statusCode: 404,
+                body: {
+                    success: false,
+                    message: "User not found"
+                }
+            };
+        }
         return {
             success: true,
             message: "User blocked"
         };
     } catch (error) {
+        if (error.statusCode) throw error;
         throw {
             statusCode: 500,
             body: {
@@ -386,17 +429,27 @@ const blockUser = async (id) => {
 };
 const unblockUser = async (id) => {
     try {
-        await User.findByIdAndUpdate(
+        const user = await User.findByIdAndUpdate(
             id,
             {
                 status: "active"
             }
         );
+        if (!user) {
+            throw {
+                statusCode: 404,
+                body: {
+                    success: false,
+                    message: "User not found"
+                }
+            };
+        }
         return {
             success: true,
             message: "User unblocked"
         };
     } catch (error) {
+        if (error.statusCode) throw error;
         throw {
             statusCode: 500,
             body: {

@@ -4,7 +4,7 @@ const Trek = require('../models/trek');
 const getAllTrek = async () => {
     try {
         console.log("In trek");
-        const data = await Trek.find({});
+        const data = await Trek.find();
         return data;
     } catch (error) {
         throw {
@@ -23,6 +23,11 @@ const getFilterTrek = async () => {
         const today = new Date();
         today.setHours(0, 0, 0, 0);
         const data = await Trek.aggregate([
+            {
+                $match: {
+                    status: "Active"
+                }
+            },
             {
                 $project: {
                     _id: 1,
@@ -87,6 +92,11 @@ const getSpecialTrek = async () => {
         const today = new Date();
         today.setHours(0, 0, 0, 0);
         const data = await Trek.aggregate([
+            {
+                $match: {
+                    status: "Active"
+                }
+            },
             {
                 $project: {
                     _id: 1,

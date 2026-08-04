@@ -97,7 +97,6 @@ Copy the example file and update the values:
 cp .env.example .env
 ```
 Configure all required environment variables before running the application.
----
 
 ## Highlights
 

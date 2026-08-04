@@ -1,7 +1,6 @@
 require('dotenv').config();
 const Booking = require('../models/booking');
 const WebhookLog = require('../models/webhookLog');
-const Razorpay = require('razorpay');
 const crypto = require('crypto');
 const { sendMail } = require('./emailService');
 const Trek = require('../models/trek');
@@ -25,7 +24,7 @@ const verifyPayment = async (paymentData) => {
                 }
             };
         }
-        await Booking.updateOne(
+        const result = await Booking.updateOne(
             { orderId: razorpay_order_id },
             {
                 $set: {
@@ -36,6 +35,15 @@ const verifyPayment = async (paymentData) => {
                 }
             }
         );
+        if (result.matchedCount === 0) {
+            throw {
+                statusCode: 404,
+                body: {
+                    success: false,
+                    message: "Booking not found"
+                }
+            };
+        }
         return {
             success: true,
             message: 'Payment Verified'
@@ -95,6 +103,23 @@ const razorpayWebhook = async (body, headers) => {
             console.log("Payment ID:", payment.id);
             console.log("Amount:", payment.amount);
             console.log("Status:", payment.status);
+
+            const booking = await Booking.findOne({
+                orderId: payment.order_id
+            });
+            if (!booking) {
+                throw {
+                    statusCode: 404,
+                    body: {
+                        message: "Booking not found"
+                    }
+                };
+            }
+            if (booking.paymentStatus === "Paid") {
+                return {
+                    success: true
+                };
+            }
             await Booking.updateOne(
                 { orderId: payment.order_id },
                 {
@@ -107,17 +132,7 @@ const razorpayWebhook = async (body, headers) => {
                 }
             );
             console.log("Payment updated from webhook");
-            const booking = await Booking.findOne({
-                orderId: payment.order_id
-            });
-            if (!booking) {
-                throw {
-                    statusCode: 404,
-                    body: {
-                        message: "Booking not found"
-                    }
-                };
-            }
+
             try {
                 const htmlContent = `
             <h1>Booking Confirmed 🎉</h1>
@@ -126,7 +141,7 @@ const razorpayWebhook = async (body, headers) => {
             <hr/>
             <p><b>Booking ID:</b> ${booking.bookingId}</p>
             <p><b>Order ID:</b> ${booking.orderId}</p>
-            <p><b>Payment ID:</b> ${booking.paymentId}</p>
+            <p><b>Payment ID:</b> ${payment.id}</p>
             <p><b>Trek Date:</b> ${booking.eventDate}</p>
             <p><b>Amount Paid:</b> ₹${booking.amount}</p>
             <hr/>
@@ -138,12 +153,6 @@ const razorpayWebhook = async (body, headers) => {
                 await sendMail(booking.email, "TrekOne Booking Confirmation", htmlContent);
             } catch (err) {
                 console.log(err);
-                throw {
-                    statusCode: 500,
-                    body: {
-                        message: "Unable to send reset email. Please try again later."
-                    }
-                };
             }
         }
         if (event === 'payment.failed') {
@@ -190,7 +199,7 @@ const razorpayWebhook = async (body, headers) => {
         }
         if (event === "refund.processed") {
             const refund = payload.payload.refund.entity;
-            await Booking.updateOne(
+            const result = await Booking.updateOne(
                 { paymentId: refund.payment_id },
                 {
                     $set: {
@@ -199,6 +208,15 @@ const razorpayWebhook = async (body, headers) => {
                     }
                 }
             );
+            if (result.matchedCount === 0) {
+                throw {
+                    statusCode: 404,
+                    body: {
+                        success: false,
+                        message: "Booking not found"
+                    }
+                };
+            }
             console.log("Refund processed");
             const booking = await Booking.findOne({
                 paymentId: refund.payment_id
@@ -226,12 +244,6 @@ const razorpayWebhook = async (body, headers) => {
                 await sendMail(booking.email, "TrekOne Refund Completed", htmlContent);
             } catch (err) {
                 console.log(err);
-                throw {
-                    statusCode: 500,
-                    body: {
-                        message: "Unable to send reset email. Please try again later."
-                    }
-                };
             }
         }
         return {

@@ -18,7 +18,7 @@ const createOrder = async (req, res) => {
 
 const getMyBookings = async (req, res) => {
     try {
-        const bookings = await bookingService.getMyBookings(req.email);
+        const bookings = await bookingService.getMyBookings(req.user.email);
         res.json(bookings);
     } catch (error) {
         console.error(error);
@@ -34,7 +34,7 @@ const getMyBookings = async (req, res) => {
 
 const cancelRefund = async (req, res) => {
     try {
-        const result = await bookingService.cancelRefund(req.body.bookingId, req.email);
+        const result = await bookingService.cancelRefund(req.body.bookingId, req.user.email);
         res.status(200).json(result);
     } catch (error) {
         console.error(error);

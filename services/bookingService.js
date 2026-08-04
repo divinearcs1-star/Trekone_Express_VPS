@@ -7,13 +7,13 @@ const Trek = require('../models/trek');
 const createOrder = async (bookingData) => {
     console.log("Inside booking");
     try {
-        // console.log(bookingData.trekId);
+        console.log(bookingData.trekId);
         //  prevent overbooking
-        // console.log("trekId =", bookingData.trekId);
-        // console.log("batchCode =", bookingData.batchCode);
-        // console.log("persons =", bookingData.noOfPersons);
-        // console.log(typeof bookingData.noOfPersons);
-        // console.log("bookingData =", bookingData);
+        console.log("trekId =", bookingData.trekId);
+        console.log("batchCode =", bookingData.batchCode);
+        console.log("persons =", bookingData.noOfPersons);
+        console.log(typeof bookingData.noOfPersons);
+        console.log("bookingData =", bookingData);
         const updated = await Trek.findOneAndUpdate(
             {
                 _id: bookingData.trekId,
@@ -29,11 +29,11 @@ const createOrder = async (bookingData) => {
                     "batches.$.availableSeats": -bookingData.noOfPersons
                 }
             },
-            { new: true }
+            { returnDocument: "after" }
         );
-        // console.log("updated =", updated);
+        console.log("updated =", updated);
         // console.log("availableSeats =", updated.availableSeats);
-        // console.log("requested =", Number(bookingData.noOfPersons));
+        console.log("requested =", Number(bookingData.noOfPersons));
         // console.log("comparison =", updated.availableSeats >= Number(bookingData.noOfPersons));
         if (!updated) {
             throw {
@@ -45,7 +45,23 @@ const createOrder = async (bookingData) => {
             };
         }
         //
+        console.log("after batch check");
         if (bookingData.customerName) {
+            // const trek = await Trek.findById(bookingData.trekId);
+            const trek = updated;
+
+            const batch = trek.batches.find(
+                b => b.batchId === bookingData.batchCode
+            );
+            if (!batch) {
+                throw {
+                    statusCode: 404,
+                    body: {
+                        success: false,
+                        message: "Batch not found"
+                    }
+                };
+            }
             const now = new Date();
             const orderId = 'TRK' + now.getFullYear() + String(now.getMonth() + 1).padStart(2, '0') + String(now.getDate()).padStart(2, '0') + Date.now().toString().slice(-6);
             // console.log(orderId);
@@ -56,9 +72,22 @@ const createOrder = async (bookingData) => {
             bookingData.paymentDate = null
             bookingData.bookingDate = new Date();
             bookingData.paymentVia = "Razorpay";
-            const formatedDate = bookingData.eventDate;
-            bookingData.eventDate = new Date(formatedDate)
+            // const formatedDate = bookingData.eventDate;
+            bookingData.eventDate = batch.eventDate;
+            bookingData.eventName = trek.eventName;
+            const amount = batch.fees * bookingData.noOfPersons;
+            bookingData.amount = amount;
+            bookingData.eventFee = batch.fees;
             // console.log("bookingData.eventDate ", bookingData.eventDate);
+            if (!trek.pickupLocation.includes(bookingData.pickupLocation)) {
+                throw {
+                    statusCode: 400,
+                    body: {
+                        success: false,
+                        message: "Invalid pickup location"
+                    }
+                };
+            }
             const newBooking = new Booking(bookingData);
             await newBooking.save();
             console.log("booking inserted");
@@ -68,7 +97,7 @@ const createOrder = async (bookingData) => {
             });
             // console.log(" key id= " + key_id);
             try {
-                const amount = bookingData.amount;
+                //const amount = bookingData.amount;
                 const options = {
                     amount: amount * 100, // paisa
                     currency: 'INR',
@@ -142,21 +171,21 @@ const createOrder = async (bookingData) => {
         }
     } catch (error) {
         console.error(error);
-        await Trek.updateOne(
-            {
-                _id: bookingData.trekId,
-                batches: {
-                    $elemMatch: {
-                        batchId: bookingData.batchCode
-                    }
-                }
-            },
-            {
-                $inc: {
-                    "batches.$.availableSeats": bookingData.noOfPersons
-                }
-            }
-        );
+        // await Trek.updateOne(
+        //     {
+        //         _id: bookingData.trekId,
+        //         batches: {
+        //             $elemMatch: {
+        //                 batchId: bookingData.batchCode
+        //             }
+        //         }
+        //     },
+        //     {
+        //         $inc: {
+        //             "batches.$.availableSeats": bookingData.noOfPersons
+        //         }
+        //     }
+        // );
         if (error.statusCode) {
             throw error;
         }
@@ -227,8 +256,18 @@ const cancelRefund = async (bookingId, email) => {
             };
         }
         const requestDate = new Date();
+        // requestDate.setHours(0, 0, 0, 0);
         console.log("requestDate: ", requestDate);
         console.log("booking.eventDate: ", booking.eventDate);
+        if (new Date(booking.eventDate) < requestDate) {
+            throw {
+                statusCode: 400,
+                body: {
+                    success: false,
+                    message: "Trek already completed"
+                }
+            };
+        }
         const diffDays = Math.ceil(
             (new Date(booking.eventDate) - requestDate) /
             (1000 * 60 * 60 * 24)
@@ -257,16 +296,11 @@ const cancelRefund = async (bookingId, email) => {
         <p>Customer: ${booking.customerName} </p>
         <p><b>Trek:</b> ${booking.eventName}</p>
         <p><b>Trek Date:</b> ${new Date(booking.eventDate).toDateString()}</p>
-        <p><b>Amount:</b> ₹${booking.amount}</p>`;
+        <p><b>Amount:</b> ₹${booking.amount}</p>
+        <p><b>Eligible Refund:</b> ₹${refundAmount}</p>`;
             await sendMail(process.env.EMAIL_ID, "TrekOne Booking Cancellation Request", htmlContent);
         } catch (err) {
             console.log(err);
-            throw {
-                statusCode: 500,
-                body: {
-                    message: "Unable to send reset email. Please try again later."
-                }
-            };
         }
         return {
             success: true,

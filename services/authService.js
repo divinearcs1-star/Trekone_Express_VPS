@@ -8,7 +8,7 @@ const jwt = require('jsonwebtoken');
 const login = async (userData) => {
     try {
         if (userData.email && userData.password) {
-            console.log("entered in login method");
+            console.log("Entered in login");
             const data = await User.findOne({ email: userData.email });
             if (data) {
                 if (data.status === 'blocked') {
@@ -23,7 +23,11 @@ const login = async (userData) => {
                 const isMatch = await bcrypt.compare(userData.password, data.password);
                 if (isMatch) {
                     console.log("Login Success");
-                    let payload = { email: data.email, role: data.role };
+                    let payload = {
+                        id: data._id.toString(),
+                        email: data.email,
+                        role: data.role
+                    };
                     let accessToken = jwt.sign(payload, process.env.JWT_SECRET, { expiresIn: '15m' });
                     const refreshToken = jwt.sign(payload, process.env.REFRESH_SECRET, { expiresIn: '7d' });
                     data.refreshToken = refreshToken;
@@ -39,7 +43,7 @@ const login = async (userData) => {
                     throw {
                         statusCode: 401,
                         body: {
-                            status: '401',
+                            success: false,
                             message: 'Invalid credentials'
                         }
                     };
@@ -49,7 +53,7 @@ const login = async (userData) => {
                 throw {
                     statusCode: 401,
                     body: {
-                        status: '401',
+                        success: false,
                         message: 'Invalid credentials'
                     }
                 };
@@ -59,7 +63,7 @@ const login = async (userData) => {
             throw {
                 statusCode: 401,
                 body: {
-                    status: '401',
+                    success: false,
                     message: 'Invalid Credentials'
                 }
             };
@@ -103,7 +107,6 @@ const register = async (userData) => {
         else {
             // Create new user
             const hashedPassword = await bcrypt.hash(userData.password, 10);
-            userData.password = hashedPassword;
             const newUser = new User({
                 email: userData.email,
                 password: hashedPassword,
@@ -159,7 +162,7 @@ const refreshToken = async (refreshToken) => {
             };
         }
         return await new Promise((resolve, reject) => {
-            jwt.verify(refreshToken, process.env.REFRESH_SECRET, async (err, decoded) => {
+            jwt.verify(refreshToken, process.env.REFRESH_SECRET, async (err) => {
                 try {
                     if (err) {
                         return reject({
@@ -172,6 +175,7 @@ const refreshToken = async (refreshToken) => {
                     // console.log("getting new token")
                     const newAccessToken = jwt.sign(
                         {
+                            id: user._id.toString(),
                             email: user.email,
                             role: user.role
                         },
@@ -181,6 +185,7 @@ const refreshToken = async (refreshToken) => {
                     // console.log("new accesstoken: ", newAccessToken)
                     const newRefreshToken = jwt.sign(
                         {
+                            id: user._id.toString(),
                             email: user.email,
                             role: user.role
                         },
@@ -226,14 +231,8 @@ const logout = async (refreshToken) => {
                 }
             };
         }
-        await User.updateOne(
-            { refreshToken },
-            {
-                $unset: {
-                    refreshToken: ""
-                }
-            }
-        );
+        user.refreshToken = null;
+        await user.save();
         return {
             success: true,
             message: "Logged out"
@@ -319,7 +318,7 @@ const resetPassword = async (data) => {
             throw {
                 statusCode: 400,
                 body: {
-                    status: 'warning',
+                    status: false,
                     message: 'Token invalid or expired'
                 }
             };
